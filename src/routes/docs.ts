@@ -7,12 +7,12 @@ router.get("/", (_req: Request, res: Response) => {
     success: true,
     message: "Memorly API Documentation",
     version: "1.0.0",
-    baseUrl: "/api/v1",
+    baseUrl: "/",
     routes: {
       authentication: {
         register: {
           method: "POST",
-          path: "/api/v1/auth/register",
+          path: "//auth/register",
           description: "Register a new user account",
           requiresAuth: false,
           body: {
@@ -25,7 +25,7 @@ router.get("/", (_req: Request, res: Response) => {
         },
         login: {
           method: "POST",
-          path: "/api/v1/auth/login",
+          path: "//auth/login",
           description: "Login to existing account",
           requiresAuth: false,
           body: {
@@ -35,7 +35,7 @@ router.get("/", (_req: Request, res: Response) => {
         },
         verifyEmail: {
           method: "POST",
-          path: "/api/v1/auth/verify-email",
+          path: "//auth/verify-email",
           description: "Verify email address with OTP",
           requiresAuth: false,
           body: {
@@ -45,7 +45,7 @@ router.get("/", (_req: Request, res: Response) => {
         },
         resendVerificationOtp: {
           method: "POST",
-          path: "/api/v1/auth/resend-verification-otp",
+          path: "//auth/resend-verification-otp",
           description: "Resend verification OTP to email",
           requiresAuth: false,
           body: {
@@ -54,7 +54,7 @@ router.get("/", (_req: Request, res: Response) => {
         },
         forgotPassword: {
           method: "POST",
-          path: "/api/v1/auth/forgot-password",
+          path: "//auth/forgot-password",
           description: "Request password reset OTP",
           requiresAuth: false,
           body: {
@@ -63,7 +63,7 @@ router.get("/", (_req: Request, res: Response) => {
         },
         resetPassword: {
           method: "POST",
-          path: "/api/v1/auth/reset-password",
+          path: "//auth/reset-password",
           description: "Reset password with OTP",
           requiresAuth: false,
           body: {

@@ -29,8 +29,8 @@ app.get('/', (_req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      api: '/api/v1',
-      documentation: '/api/v1/docs',
+      api: '/',
+      documentation: '//docs',
       swagger: '/api-docs',
     },
   });
@@ -50,7 +50,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'Memorly API Documentation',
 }));
 
-app.use('/api/v1', router);
+app.use('/', router);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

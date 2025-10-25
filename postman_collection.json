@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:4000/api/v1",
+      "value": "http://localhost:4000/",
       "type": "string"
     },
     {
@@ -37,8 +37,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "description": "Register a new user account. Returns JWT token and user info."
           },
@@ -60,8 +65,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "description": "Login to existing account. Returns JWT token and user info."
           },
@@ -83,8 +93,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/verify-email",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "verify-email"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-email"
+              ]
             },
             "description": "Verify email address using 6-digit OTP sent to user's email."
           },
@@ -106,8 +121,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/resend-verification-otp",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "resend-verification-otp"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "resend-verification-otp"
+              ]
             },
             "description": "Request a new verification OTP to be sent to email."
           },
@@ -129,8 +149,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             },
             "description": "Request password reset OTP to be sent to email."
           },
@@ -152,8 +177,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "reset-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
             },
             "description": "Reset password using OTP sent to email."
           },
@@ -169,9 +199,13 @@
         "url": {
           "raw": "http://localhost:4000/health",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "4000",
-          "path": ["health"]
+          "path": [
+            "health"
+          ]
         },
         "description": "Check if the API server is running and healthy."
       },
@@ -185,9 +219,13 @@
         "url": {
           "raw": "http://localhost:4000/",
           "protocol": "http",
-          "host": ["localhost"],
+          "host": [
+            "localhost"
+          ],
           "port": "4000",
-          "path": [""]
+          "path": [
+            ""
+          ]
         },
         "description": "Get API server information and available endpoints."
       },
@@ -200,8 +238,12 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/docs",
-          "host": ["{{baseUrl}}"],
-          "path": ["docs"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "docs"
+          ]
         },
         "description": "Get complete API documentation in JSON format."
       },
