@@ -1,30 +1,49 @@
-import B2 from "backblaze-b2";
+import { S3Client } from "@aws-sdk/client-s3";
 
-const b2 = new B2({
-  applicationKeyId: process.env.B2_APPLICATION_KEY_ID || "",
-  applicationKey: process.env.B2_APPLICATION_KEY || "",
+const b2KeyId = process.env.B2_KEY_ID || "";
+const b2AppKey = process.env.B2_APP_KEY || "";
+const b2BucketName = process.env.B2_BUCKET || "";
+const b2Region = process.env.B2_REGION || "";
+const b2Endpoint = process.env.B2_ENDPOINT || "";
+
+if (!b2KeyId || !b2AppKey || !b2BucketName || !b2Region || !b2Endpoint) {
+  console.warn(
+    "Warning: Missing Backblaze B2 configuration. File uploads will not work."
+  );
+  console.warn(
+    "Required: B2_KEY_ID, B2_APP_KEY, B2_BUCKET, B2_REGION, B2_ENDPOINT"
+  );
+}
+
+// Create S3Client instance for Backblaze B2
+export const s3Client = new S3Client({
+  region: b2Region,
+  endpoint: b2Endpoint,
+  credentials: {
+    accessKeyId: b2KeyId,
+    secretAccessKey: b2AppKey,
+  },
+  forcePathStyle: true,
 });
 
-let isAuthorized = false;
-
 export const authorizeB2 = async (): Promise<void> => {
-  if (isAuthorized) return;
-
   try {
-    await b2.authorize();
-    isAuthorized = true;
-    console.log("Backblaze B2 authorized successfully");
+    if (!b2KeyId || !b2AppKey || !b2BucketName || !b2Region || !b2Endpoint) {
+      throw new Error("Missing required Backblaze B2 configuration");
+    }
+    console.log("Backblaze B2 configured successfully");
   } catch (error) {
-    console.error("Failed to authorize Backblaze B2:", error);
-    throw new Error("Backblaze B2 authorization failed");
+    console.error("Failed to configure Backblaze B2:", error);
+    throw new Error("Backblaze B2 configuration failed");
   }
 };
 
-export const getB2 = (): B2 => {
-  if (!isAuthorized) {
-    throw new Error("Backblaze B2 not authorized. Call authorizeB2() first.");
-  }
-  return b2;
+export const getB2Config = () => {
+  return {
+    bucketName: b2BucketName,
+    region: b2Region,
+    endpoint: b2Endpoint,
+  };
 };
 
-export default b2;
+export default s3Client;

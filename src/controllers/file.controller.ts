@@ -49,6 +49,15 @@ export const uploadFile = async (
     }
 
     const fileType = getFileType(file.mimetype);
+
+    if (fileType === "unknown") {
+      handleError({
+        res,
+        error: new Error("Unsupported file type. Only images and videos are allowed."),
+      });
+      return;
+    }
+
     const maxSize = getMaxFileSize(fileType);
 
     // Validate file size

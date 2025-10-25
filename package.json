@@ -5,13 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --transpile-only --env-file=.env src/index.ts"
+    "dev": "ts-node-dev --transpile-only --env-file=.env src/index.ts",
+    "build": "tsc && tsc-alias",
+    "prod-start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && pm2 start dist/index.js --node-args='--env-file=.env'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "backblaze-b2": "^1.7.1",
+    "@aws-sdk/client-s3": "^3.917.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -27,6 +29,7 @@
     "ts-node-dev": "^2.0.0"
   },
   "devDependencies": {
+    "@types/backblaze-b2": "^1.5.6",
     "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
@@ -36,6 +39,7 @@
     "@types/otp-generator": "^4.0.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3"
   }
 }
