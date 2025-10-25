@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --transpile-only --env-file=.env src/index.ts",
     "build": "tsc && tsc-alias",
-    "prod-start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && pm2 start dist/index.js --node-args='--env-file=.env'"
+    "prod-start": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json && pm2 start dist/index.js --name memorly --node-args='--env-file=.env'"
   },
   "keywords": [],
   "author": "",
