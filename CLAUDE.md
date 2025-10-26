@@ -53,10 +53,11 @@ User Request → Middleware (Auth/Upload) → Routes → Controllers → Service
    - Automatic cleanup of expired chunked uploads (24-hour TTL, cleaned every 6 hours)
 
 3. **AI-Powered Chat System**
-   - **Blocking AI responses**: Users wait for AI reply before sending next message
-   - Google Gemini AI (gemini-2.0-flash-exp) integration
+   - **Streaming AI responses**: Server-Sent Events (SSE) for real-time response streaming
+   - External LLM service integration with memory-aware context retrieval
+   - Two-step message flow: `/message/create` for manual messages, `/generate` for AI responses
    - Memory-aware responses using retrieved context from files and messages
-   - Returns both user message and AI response in single API call
+   - Graceful error handling with fallback error streams
 
 4. **Friend System**
    - Friend requests with state machine: `null → pending → accepted/rejected`
@@ -173,39 +174,45 @@ Cleanup: Background service runs every 6 hours
 
 #### Pattern 3: AI Chat Integration
 
-**Blocking synchronous flow:**
+**Streaming SSE flow:**
 
 ```
-User sends message
+User sends message to /chat/generate
   ↓
 Save user message to DB
   ↓
-AWAIT generateAIResponse() ← BLOCKS HERE
-  ├─ Retrieve context (last 5 files + last 10 user messages)
-  ├─ Build memory-aware prompt
-  ├─ Call Gemini API (temperature: 0.7, maxTokens: 1024)
-  └─ Return AI response text
+Call external LLM service (MEMORLY_INTERNAL_TOOLS_API)
+  ├─ Service retrieves context (files + messages from MongoDB)
+  ├─ Service builds memory-aware prompt
+  ├─ Service generates response with LLM
+  └─ Returns streaming response
   ↓
-Save AI response as system message
-  ↓
-Return BOTH messages to client
+Pipe stream to client as Server-Sent Events (SSE)
+  ├─ type: "metadata" - Context sources used
+  ├─ type: "chunk" - Response text chunks (streamed in real-time)
+  ├─ type: "done" - Processing complete with timing info
+  └─ type: "error" - Error message if generation fails
 ```
 
-**Response structure:**
-```typescript
-{
-  success: true,
-  data: {
-    userMessage: { id, text, senderType: "user", ... },
-    aiMessage: { id, text, senderType: "system", ... }  // or null if AI fails
-  }
-}
+**SSE Response format:**
+```
+data: {"type": "metadata", "data": {"sources": [...]}}
+
+data: {"type": "chunk", "data": "Based on your memories"}
+
+data: {"type": "chunk", "data": ", you visited..."}
+
+data: {"type": "done", "data": {"processing_time": 2.5}}
 ```
 
-**Global AI instance:**
-- Gemini initialized at startup in `src/config/gemini.ts`
-- Stored in `global.ai` (type-augmented in `src/types/global.d.ts`)
-- Accessible throughout the application
+**Alternative: Manual message creation:**
+Use `POST /chat/message/create` to create messages without AI response (for system messages or direct user messages).
+
+**External LLM Service:**
+- Endpoint configured via `MEMORLY_INTERNAL_TOOLS_API` environment variable
+- Service handles memory retrieval and AI generation
+- 120-second timeout for streaming responses
+- Graceful fallback to error streams on service unavailability
 
 #### Pattern 4: Friend Request State Machine
 
@@ -243,8 +250,10 @@ rejected ────→ BlockedUser created
 │       └── GET /status/:id    # Check progress
 ├── /chat              # Chat and messages
 │   ├── POST /create           # Create chat
-│   ├── POST /message/create   # Send message (triggers AI response)
-│   └── GET /:chatId/messages  # Get chat history
+│   ├── POST /message/create   # Send message (manual, no AI response)
+│   ├── POST /generate         # Generate AI response with streaming (SSE)
+│   ├── GET /:chatId/messages  # Get chat history
+│   └── DELETE /message/:id    # Delete message
 ├── /friends           # Friend management
 │   ├── POST /request          # Send friend request
 │   ├── POST /accept           # Accept request
@@ -324,10 +333,12 @@ Two strategies:
 - `cleanupExpiredUploads()` - Delete expired sessions (called by cleanup service)
 
 **AI Chat Service** (`src/services/ai-chat.service.ts`):
-- `generateAIResponse(userId, chatId, userMessage)` - Main function
-- `retrieveRelevantMemories(userId, query)` - Get context (last 5 files + 10 messages)
-- `buildMemoryPrompt(query, memories)` - Construct Gemini prompt
-- TODO: Replace with vector database for semantic search
+- `generateAIResponseStream(userId, userQuery, limit)` - Main streaming function
+- Makes HTTP POST to external LLM service at `${MEMORLY_INTERNAL_TOOLS_API}/generate`
+- Returns readable stream for Server-Sent Events
+- Includes error handling with fallback error streams
+- 120-second timeout for LLM service responses
+- NOTE: Memory retrieval and AI generation handled by external service
 
 **Email Service** (`src/utils/email.service.ts`):
 - `sendVerificationEmail(email, otp)` - Email verification OTP
@@ -367,6 +378,7 @@ EMAIL_FROM_NAME=Memorly
 
 # AI
 GEMINI_API_KEY=your_gemini_api_key
+MEMORLY_INTERNAL_TOOLS_API=http://localhost:5000  # External LLM service endpoint
 
 # Server
 PORT=4000
@@ -427,9 +439,11 @@ declare global {
 - Large videos: 10GB (chunked upload)
 
 **AI Response Behavior:**
-- Users must wait for AI response before sending next message
-- Average response time: 2-5 seconds
-- Failed AI responses still return user message with `aiMessage: null`
+- Streaming responses via Server-Sent Events (SSE) for real-time updates
+- User message saved immediately, AI response streams afterward
+- Average response time: 2-5 seconds (streamed in chunks)
+- Failed AI responses return error stream with error type and message
+- Requires external LLM service running at `MEMORLY_INTERNAL_TOOLS_API`
 
 **Friend Request Flow:**
 - Check for blocked users before allowing friend requests
@@ -472,7 +486,8 @@ Route documentation uses JSDoc comments in router files.
 
 ### Future Enhancements (TODOs in code)
 
-- Vector database integration for semantic memory search (noted in `ai-chat.service.ts`)
-- Socket.IO for real-time chat updates (types already defined)
+- Vector database integration for semantic memory search (handled by external LLM service)
+- Socket.IO for bidirectional real-time updates (SSE currently provides server-to-client streaming)
 - Batch operations for memory sync
 - Image/video analysis for AI context (OCR, object detection)
+- AI response persistence to database (currently only streamed, not saved)

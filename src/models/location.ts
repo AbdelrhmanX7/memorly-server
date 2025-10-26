@@ -26,8 +26,6 @@ const locationSchema = new Schema<ILocation>(
 
 // Index for efficient queries
 locationSchema.index({ userId: 1, createdAt: -1 });
-
-// Compound index to prevent duplicate locations for the same user
-locationSchema.index({ userId: 1, location: 1 }, { unique: true });
+locationSchema.index({ userId: 1, location: 1 });
 
 export const Location = mongoose.model<ILocation>("Location", locationSchema);

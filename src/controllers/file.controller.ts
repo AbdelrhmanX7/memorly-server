@@ -194,11 +194,7 @@ export const uploadFile = async (
     // Save location to Location model if provided
     if (location) {
       try {
-        await Location.findOneAndUpdate(
-          { userId, location },
-          { userId, location },
-          { upsert: true, new: true }
-        );
+        await Location.create({ userId, location });
       } catch (error) {
         console.error("Error saving location:", error);
         // Continue even if location save fails

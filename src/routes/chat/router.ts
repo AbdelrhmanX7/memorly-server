@@ -9,6 +9,7 @@ import {
   createMessage,
   getChatMessages,
   deleteMessage,
+  generateStreamingResponse,
 } from "../../controllers/message.controller";
 import { verifyToken } from "../../middleware/auth.middleware";
 
@@ -246,6 +247,69 @@ router.delete("/:chatId", deleteChat);
  *         description: Internal server error
  */
 router.post("/message/create", createMessage);
+
+/**
+ * @swagger
+ * /chat/generate:
+ *   post:
+ *     tags: [Message]
+ *     summary: Generate AI response with streaming (SSE)
+ *     description: |
+ *       Generate conversational AI response using LLM based on retrieved memories.
+ *       This endpoint streams the response in Server-Sent Events (SSE) format.
+ *       Pipeline:
+ *       1. Save user message to database
+ *       2. Retrieve relevant memories (via LLM service)
+ *       3. Generate conversational response (via LLM service)
+ *       4. Stream response to client
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - chatId
+ *               - text
+ *             properties:
+ *               chatId:
+ *                 type: string
+ *                 example: 507f1f77bcf86cd799439011
+ *               text:
+ *                 type: string
+ *                 example: What did I do last week?
+ *               limit:
+ *                 type: number
+ *                 example: 10
+ *                 default: 10
+ *                 description: Number of memories to retrieve
+ *     responses:
+ *       200:
+ *         description: Streaming response (SSE format)
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               example: |
+ *                 data: {"type": "metadata", "data": {"sources": [...]}}
+ *
+ *                 data: {"type": "chunk", "data": "Based on your memories"}
+ *
+ *                 data: {"type": "chunk", "data": ", you visited..."}
+ *
+ *                 data: {"type": "done", "data": {"processing_time": 2.5}}
+ *       400:
+ *         description: Bad request - missing required fields
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Chat not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/generate", generateStreamingResponse);
 
 /**
  * @swagger
