@@ -9,6 +9,8 @@ export interface IFile extends Document {
   fileSize: number;
   fileUrl: string;
   fileId: string; // Backblaze B2 file ID
+  location: string | null;
+  timestamp: Date;
   bucketName: string;
   uploadedAt: Date;
 }
@@ -58,6 +60,14 @@ const fileSchema = new Schema<IFile>(
       required: true,
     },
     uploadedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    location: {
+      type: String,
+      default: null,
+    },
+    timestamp: {
       type: Date,
       default: Date.now,
     },

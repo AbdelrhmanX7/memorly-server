@@ -15,6 +15,7 @@ interface InitiateUploadParams {
   mimeType: string;
   totalSize: number;
   totalChunks: number;
+  location?: string | null;
 }
 
 interface InitiateUploadResult {
@@ -59,7 +60,7 @@ export const MAX_VIDEO_SIZE = 10 * 1024 * 1024 * 1024; // 10GB
 export const initiateChunkedUpload = async (
   params: InitiateUploadParams
 ): Promise<InitiateUploadResult> => {
-  const { userId, originalName, mimeType, totalSize, totalChunks } = params;
+  const { userId, originalName, mimeType, totalSize, totalChunks, location } = params;
   const { bucketName } = getB2Config();
 
   // Validate video MIME type
@@ -150,6 +151,7 @@ export const initiateChunkedUpload = async (
       uploadedChunks: 0,
       parts: [],
       status: "initiated",
+      location: location || null,
       expiresAt,
     });
 
@@ -362,6 +364,7 @@ export const getUploadStatus = async (uploadId: string, userId: string) => {
     totalChunks: uploadSession.totalChunks,
     uploadedChunks: uploadSession.uploadedChunks,
     status: uploadSession.status,
+    location: uploadSession.location,
     parts: uploadSession.parts.map((p) => ({
       partNumber: p.partNumber,
       size: p.size,

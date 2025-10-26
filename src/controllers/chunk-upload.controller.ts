@@ -8,6 +8,7 @@ import {
   CHUNK_SIZE,
 } from "../utils/chunk-upload.service";
 import { File } from "../models/file";
+import { Location } from "../models/location";
 import { handleError } from "../utils/handle-error";
 import { createMemory } from "../utils/memory.helper";
 
@@ -31,7 +32,7 @@ export const initiateUpload = async (
       return;
     }
 
-    const { originalName, mimeType, totalSize, totalChunks } = req.body;
+    const { originalName, mimeType, totalSize, totalChunks, location } = req.body;
 
     // Validate input
     if (!originalName || !mimeType || !totalSize || !totalChunks) {
@@ -70,6 +71,7 @@ export const initiateUpload = async (
       mimeType,
       totalSize,
       totalChunks,
+      location: location || null,
     });
 
     res.status(201).json({
@@ -216,7 +218,23 @@ export const completeUpload = async (
       fileUrl: result.fileUrl,
       fileId: result.fileId,
       bucketName: result.bucketName,
+      location: uploadStatus.location || null,
+      timestamp: new Date(), // Videos don't have EXIF, use current time
     });
+
+    // Save location to Location model if provided
+    if (uploadStatus.location) {
+      try {
+        await Location.findOneAndUpdate(
+          { userId, location: uploadStatus.location },
+          { userId, location: uploadStatus.location },
+          { upsert: true, new: true }
+        );
+      } catch (error) {
+        console.error("Error saving location:", error);
+        // Continue even if location save fails
+      }
+    }
 
     // Create memory for file upload
     await createMemory({
@@ -227,6 +245,10 @@ export const completeUpload = async (
         fileName: newFile.fileName,
         fileType: newFile.fileType,
         fileUrl: newFile.fileUrl,
+        fileSize: newFile.fileSize,
+        mimeType: newFile.mimeType,
+        location: newFile.location,
+        timestamp: newFile.timestamp,
       },
     });
 
@@ -240,6 +262,8 @@ export const completeUpload = async (
         fileType: newFile.fileType,
         fileSize: newFile.fileSize,
         fileUrl: newFile.fileUrl,
+        location: newFile.location,
+        timestamp: newFile.timestamp,
         uploadedAt: newFile.uploadedAt,
       },
     });

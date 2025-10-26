@@ -16,6 +16,7 @@ export interface IChunkUpload extends Document {
     size: number;
   }>;
   status: "initiated" | "uploading" | "completed" | "failed" | "aborted";
+  location: string | null;
   expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -90,6 +91,10 @@ const chunkUploadSchema = new Schema<IChunkUpload>(
       enum: ["initiated", "uploading", "completed", "failed", "aborted"],
       default: "initiated",
       required: true,
+    },
+    location: {
+      type: String,
+      default: null,
     },
     expiresAt: {
       type: Date,

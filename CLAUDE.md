@@ -4,93 +4,475 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Memorly is a financial resource tracking application backend built with Express.js, TypeScript, and MongoDB. The application manages financial records (profits and expenses) with categorization and color-coding support.
+Memorly is a **memory tracking and AI-powered chat application backend** built with Express.js, TypeScript, and MongoDB. The application features file uploads (images/videos) with chunked upload support, an AI chat assistant powered by Google Gemini, friend system, and an activity timeline that aggregates user activities across the platform.
 
 ## Development Commands
 
-### Running the server
+### Development Server
 ```bash
 yarn dev
 ```
-Runs the development server using `ts-node-dev` with auto-reload and environment variable loading from `.env` file.
+Runs the development server with hot-reload using `ts-node-dev`. Automatically loads environment variables from `.env` file.
 
-### Environment Setup
-Create a `.env` file based on `.env.example`:
-- `PORT`: Server port (defaults to 4000)
-- `MONGODB_URI`: MongoDB connection string (defaults to `mongodb://127.0.0.1:27017/99tech-problem5`)
+### Build
+```bash
+yarn build
+```
+Compiles TypeScript to JavaScript using `tsc` and resolves path aliases with `tsc-alias`. Output goes to `dist/` directory.
+
+### Production Deployment
+```bash
+yarn prod-start    # Initial deployment with PM2
+yarn reload-prod   # Rebuild and reload without downtime
+```
+Uses PM2 process manager with the name `memorly`. The process will automatically load environment variables from `.env` file.
 
 ## Architecture
 
-### Application Structure
-
-The codebase follows a modular MVC-style architecture:
+### High-Level Application Flow
 
 ```
-src/
-├── index.ts          # Application entry point, Express setup, and server initialization
-├── config/
-│   └── db.ts         # MongoDB connection configuration
-├── models/           # Mongoose schemas and TypeScript types
-│   ├── index.ts      # Model exports
-│   └── resource.ts   # Resource (profit/expense) model
-├── routes/           # Express route definitions
-│   ├── index.ts      # Main router (currently empty)
-│   └── resource/
-│       └── router.ts # Resource-specific routes (stub implementations)
-├── controllers/      # Request handlers (currently empty)
-└── validation/       # Input validation logic (currently empty)
+User Request → Middleware (Auth/Upload) → Routes → Controllers → Services/Utils → Models → Database
+                                                        ↓
+                                                   External Services
+                                                   (Backblaze B2, Gemini AI, Email)
 ```
 
-### Data Model
+### Core Features
 
-**Resource Model** (`src/models/resource.ts`)
-- Represents financial transactions (profit or expense)
-- Fields:
-  - `title`: string (required, max 100 chars)
-  - `description`: string (optional, max 500 chars)
-  - `type`: enum ['profit', 'expense'] (required)
-  - `category`: string (required)
-  - `categoryColor`: hex color code (optional, defaults to #3B82F6, validated via regex)
-  - `amount`: number (required, min 0)
-  - `date`: Date (required)
-- Includes automatic `timestamps` (createdAt, updatedAt)
+1. **Authentication & User Management**
+   - JWT-based authentication with 30-day expiry
+   - Email verification via OTP (10-minute expiry with MongoDB TTL index)
+   - Password reset flow with OTP
+   - User registration with age verification (min 13 years) and privacy policy acceptance
 
-### Route Structure
+2. **File Management with Dual Upload Strategy**
+   - **Direct uploads**: Images and small videos (up to 100MB) → Backblaze B2
+   - **Chunked uploads**: Large videos (up to 10GB) via S3-compatible multipart upload API
+   - Unique filename generation: `timestamp-randomhex.ext`
+   - Automatic cleanup of expired chunked uploads (24-hour TTL, cleaned every 6 hours)
 
-Resource routes are defined in `src/routes/resource/router.ts` but currently have no handlers:
-- `POST /create` - Create new resource
-- `GET /resources` - List all resources
-- `GET /resource/:id` - Get single resource
-- `PUT /resource/:id` - Update resource
-- `DELETE /resource/:id` - Delete resource
+3. **AI-Powered Chat System**
+   - **Blocking AI responses**: Users wait for AI reply before sending next message
+   - Google Gemini AI (gemini-2.0-flash-exp) integration
+   - Memory-aware responses using retrieved context from files and messages
+   - Returns both user message and AI response in single API call
 
-**Note:** Routes are defined but not yet connected to the main Express app in `src/index.ts`.
+4. **Friend System**
+   - Friend requests with state machine: `null → pending → accepted/rejected`
+   - Auto-blocking on rejection
+   - User search functionality
+   - Bidirectional relationship tracking
 
-### TypeScript Configuration
+5. **Memory Timeline & Dashboard**
+   - **Critical Pattern**: Timeline queries ALL source models (File, Chat, Message, Friend), NOT just Memory model
+   - Memory model acts as activity cache with background sync
+   - Pagination and filtering by activity type
+   - Dashboard with statistics and recent activities
 
-- Strict mode enabled with additional type safety flags:
-  - `noUncheckedIndexedAccess`: true
-  - `exactOptionalPropertyTypes`: true
-  - `noUncheckedSideEffectImports`: true
-- Output: `dist/` directory
-- Source maps and declaration files generated
+### Database Models and Relationships
 
-## Key Implementation Details
+```
+User (Core Entity)
+├── Files (1:N) - User uploads stored in Backblaze B2
+├── Chats (1:N) - Chat sessions
+│   └── Messages (1:N) - Messages with senderType: 'user' | 'system' (AI)
+├── Friends (N:N) - Friend relationships with status tracking
+│   └── BlockedUsers (1:N) - Blocked relationships (auto-created on rejection)
+├── OTPs (1:N) - Verification codes with TTL index (auto-expire after 10 min)
+├── ChunkUploads (1:N) - Multipart upload session state
+└── Memories (1:N) - Activity timeline cache
+```
 
-### Database Connection
-The app connects to MongoDB on startup via `connectDB()` in `src/index.ts:8`. Connection failures cause the process to exit with code 1.
+**Key Model Patterns:**
 
-### Middleware Stack
-1. CORS enabled for all origins
-2. JSON body parser
-3. URL-encoded body parser with extended mode
+- **User Model** (`src/models/user.ts`):
+  - Password hashing via bcrypt pre-save hook (10 salt rounds)
+  - Custom `comparePassword` method for authentication
+  - Password field excluded from all query results
 
-### Validation Strategy
-The Resource model uses Mongoose schema validation with a custom validator for hex color codes (`/^#([0-9A-F]{3}){1,2}$/i`).
+- **Memory Model** (`src/models/memory.ts`):
+  - Acts as **unified activity aggregation cache**
+  - Activity types: `file_upload`, `chat_created`, `message_sent`, `friend_request_sent/accepted/rejected`
+  - Flexible metadata schema (Schema.Types.Mixed)
+  - Compound indexes: `userId + createdAt`, `userId + activityType + createdAt`
+  - **IMPORTANT**: Timeline queries source models first, then syncs to Memory in background
 
-## Development Notes
+- **ChunkUpload Model** (`src/models/chunk-upload.ts`):
+  - Tracks S3 multipart upload state and uploaded parts (with ETags)
+  - Status: `initiated → uploading → completed/failed/aborted`
+  - Auto-expiry after 24 hours
+  - Enables resumable uploads
 
-- Controllers and validation modules are stubbed out (empty directories exist)
-- The main router (`src/routes/index.ts`) exists but is not imported/used in the application
-- Resource routes are defined but not connected to the Express app
-- Joi validation library is installed but not yet implemented
+- **OTP Model** (`src/models/otp.ts`):
+  - MongoDB TTL index for auto-deletion (10 minutes)
+  - Types: `email_verification`, `password_reset`
+
+### Critical Implementation Patterns
+
+#### Pattern 1: Memory Tracking System
+
+**Non-blocking memory creation across the app:**
+
+```typescript
+// In any controller after creating a record
+await createMemory({
+  userId,
+  activityType: "file_upload",  // or chat_created, message_sent, etc.
+  metadata: { fileId, fileName, ... }
+});
+// IMPORTANT: Never throws errors - wrapped in try-catch, logs errors but continues
+```
+
+**Timeline Aggregation Strategy:**
+
+The `getMemoriesTimeline()` controller queries ALL source models in parallel:
+```
+1. File.find({ userId }) → file_upload activities
+2. Chat.find({ userId }) → chat_created activities
+3. Message.find({ userId, senderType: "user" }) → message_sent activities
+4. Friend.find({ $or: [senderId, receiverId] }) → friend request activities
+5. Combine → Sort by date → Paginate → Group by date
+6. Background sync to Memory model (non-blocking)
+```
+
+**Why this approach?**
+- Ensures accuracy (source of truth is source models)
+- Handles historical data that may not be in Memory model
+- Background sync keeps Memory model updated for future optimizations
+
+#### Pattern 2: Chunked Upload Flow
+
+Large video uploads use a multi-step process:
+
+```
+1. POST /files/chunk/initiate
+   → Creates S3 multipart upload
+   → Returns uploadId and chunkSize (5MB)
+
+2. POST /files/chunk/upload (repeated for each chunk)
+   → Uploads chunk to S3
+   → Stores ETag in ChunkUpload.parts array
+
+3. POST /files/chunk/complete
+   → Combines all parts in S3
+   → Creates File record
+   → Creates memory entry
+   → Returns file URL
+
+Cleanup: Background service runs every 6 hours
+   → Finds expired ChunkUploads (>24h)
+   → Aborts S3 multipart upload
+   → Deletes ChunkUpload record
+```
+
+**Key constants** (in `src/utils/chunk-upload.service.ts`):
+- `CHUNK_SIZE`: 5MB (S3 minimum for multipart)
+- `MAX_VIDEO_SIZE`: 10GB
+- Expiry: 24 hours
+
+#### Pattern 3: AI Chat Integration
+
+**Blocking synchronous flow:**
+
+```
+User sends message
+  ↓
+Save user message to DB
+  ↓
+AWAIT generateAIResponse() ← BLOCKS HERE
+  ├─ Retrieve context (last 5 files + last 10 user messages)
+  ├─ Build memory-aware prompt
+  ├─ Call Gemini API (temperature: 0.7, maxTokens: 1024)
+  └─ Return AI response text
+  ↓
+Save AI response as system message
+  ↓
+Return BOTH messages to client
+```
+
+**Response structure:**
+```typescript
+{
+  success: true,
+  data: {
+    userMessage: { id, text, senderType: "user", ... },
+    aiMessage: { id, text, senderType: "system", ... }  // or null if AI fails
+  }
+}
+```
+
+**Global AI instance:**
+- Gemini initialized at startup in `src/config/gemini.ts`
+- Stored in `global.ai` (type-augmented in `src/types/global.d.ts`)
+- Accessible throughout the application
+
+#### Pattern 4: Friend Request State Machine
+
+```
+null state (no relationship)
+  ↓
+pending (request sent)
+  ↓
+accepted ────→ friends
+  ↓
+rejected ────→ BlockedUser created
+```
+
+**Key behaviors:**
+- Rejecting a friend request automatically creates a BlockedUser entry
+- Blocked users cannot send new friend requests
+- Bidirectional queries check both senderId and receiverId
+- Prevents self-friending
+
+### Route Organization
+
+**Main Router Structure** (`src/routes/index.ts`):
+
+```
+/
+├── /auth              # Registration, login, OTP verification, password reset
+├── /docs              # API documentation (Swagger UI at /api-docs)
+├── /files             # File uploads
+│   ├── POST /upload           # Direct upload (up to 100MB)
+│   └── /chunk                 # Chunked upload endpoints
+│       ├── POST /initiate     # Start multipart upload
+│       ├── POST /upload       # Upload single chunk
+│       ├── POST /complete     # Finalize upload
+│       ├── POST /abort        # Cancel upload
+│       └── GET /status/:id    # Check progress
+├── /chat              # Chat and messages
+│   ├── POST /create           # Create chat
+│   ├── POST /message/create   # Send message (triggers AI response)
+│   └── GET /:chatId/messages  # Get chat history
+├── /friends           # Friend management
+│   ├── POST /request          # Send friend request
+│   ├── POST /accept           # Accept request
+│   ├── POST /reject           # Reject request (auto-blocks)
+│   ├── GET /list              # Get friends
+│   └── GET /search            # Search users
+└── /memories          # Timeline and dashboard
+    ├── GET /dashboard         # Stats + recent activities (recommended for home screen)
+    ├── GET /timeline          # Paginated timeline with filtering
+    ├── GET /stats             # Activity statistics
+    └── POST /sync             # Manual memory sync
+```
+
+### Controller Pattern
+
+All controllers follow this consistent structure:
+
+```typescript
+export const controllerName = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      handleError({ res, error: new Error("User not authenticated"), statusCode: 401 });
+      return;
+    }
+
+    // Validate input
+    // Business logic
+    // Create memory (if applicable)
+
+    res.status(200).json({
+      success: true,
+      message: "Success message",
+      data: { ... }
+    });
+  } catch (error: unknown) {
+    console.error("Error description:", error);
+    handleError({ res, error: error as Error, statusCode: 500 });
+  }
+};
+```
+
+**Standard response format:**
+```typescript
+{ success: boolean, message: string, data?: any }
+```
+
+### Middleware
+
+**Authentication Middleware** (`src/middleware/auth.middleware.ts`):
+```
+Extract Bearer token → Verify JWT → Attach user info to req.user → Next
+```
+Attaches `{ userId: string, email: string }` to `req.user` for downstream use.
+
+**Upload Middleware** (`src/middleware/upload.middleware.ts`):
+
+Two strategies:
+1. **Regular upload**: Memory storage, 100MB limit, filters images/videos
+2. **Chunked upload**: 10MB per chunk, no filtering (handled in controller)
+
+### Key Utilities and Services
+
+**File Service** (`src/utils/file.service.ts`):
+- `uploadToB2(file, userId)` - Upload to Backblaze B2 using S3 SDK
+- `deleteFromB2(fileUrl)` - Delete from storage
+- `validateFileType(mimeType)` - MIME validation for images/videos
+- Unique filename: `Date.now()-${crypto.randomBytes(8).toString('hex')}.${ext}`
+- Sets cache headers (1 year) and content type
+
+**Chunk Upload Service** (`src/utils/chunk-upload.service.ts`):
+- `initiateChunkedUpload(fileName, fileSize, userId)` - Start S3 multipart
+- `uploadChunk(uploadId, chunkNumber, buffer)` - Upload part, returns ETag
+- `completeChunkedUpload(uploadId, userId)` - Finalize, create File record
+- `abortChunkedUpload(uploadId)` - Cancel upload
+- `cleanupExpiredUploads()` - Delete expired sessions (called by cleanup service)
+
+**AI Chat Service** (`src/services/ai-chat.service.ts`):
+- `generateAIResponse(userId, chatId, userMessage)` - Main function
+- `retrieveRelevantMemories(userId, query)` - Get context (last 5 files + 10 messages)
+- `buildMemoryPrompt(query, memories)` - Construct Gemini prompt
+- TODO: Replace with vector database for semantic search
+
+**Email Service** (`src/utils/email.service.ts`):
+- `sendVerificationEmail(email, otp)` - Email verification OTP
+- `sendPasswordResetEmail(email, otp)` - Password reset OTP
+- Nodemailer transporter with HTML templates
+
+**Memory Helper** (`src/utils/memory.helper.ts`):
+- `createMemory({ userId, activityType, metadata })` - Single creation function
+- Wrapped in try-catch, never throws
+- Used consistently across all controllers
+
+### Configuration
+
+**Required Environment Variables:**
+
+```env
+# Database
+MONGODB_URI=mongodb://127.0.0.1:27017/memorly
+
+# Authentication
+JWT_SECRET=your_jwt_secret
+
+# Backblaze B2 (S3-compatible)
+B2_KEY_ID=your_key_id
+B2_APP_KEY=your_app_key
+B2_BUCKET=your_bucket_name
+B2_REGION=us-west-000
+B2_ENDPOINT=https://s3.us-west-000.backblazeb2.com
+
+# Email (SMTP)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your_email@gmail.com
+GOOGLE_APP_PASSWORD=your_app_password
+EMAIL_FROM_NAME=Memorly
+
+# AI
+GEMINI_API_KEY=your_gemini_api_key
+
+# Server
+PORT=4000
+```
+
+**Config Files:**
+- `src/config/db.ts` - MongoDB connection
+- `src/config/backblaze.ts` - S3 client with path-style access for B2 compatibility
+- `src/config/gemini.ts` - GoogleGenAI initialization
+- `src/config/swagger.ts` - API documentation
+
+### Background Services
+
+**Cleanup Service** (`src/services/cleanup.service.ts`):
+
+Started at application boot in `src/index.ts`:
+```typescript
+startPeriodicCleanup(6)  // Runs every 6 hours
+```
+
+Calls `cleanupExpiredUploads()` to:
+1. Find ChunkUploads older than 24 hours
+2. Abort multipart upload in S3
+3. Delete ChunkUpload record from database
+
+### TypeScript Type System
+
+**Express Request Augmentation** (`src/types/express.d.ts`):
+```typescript
+export interface AuthRequest extends Request {
+  user?: { userId: string; email: string };
+}
+```
+
+**Global Type Augmentation** (`src/types/global.d.ts`):
+```typescript
+declare global {
+  var ai: GoogleGenAI;      // Gemini AI instance
+  var io: SocketIOServer;   // For future Socket.IO integration
+}
+```
+
+### Important Implementation Notes
+
+**Memory Creation:**
+- Always use `createMemory()` helper from `src/utils/memory.helper.ts`
+- Never manually create Memory documents
+- Helper never throws errors - safe to call without try-catch
+
+**Timeline Queries:**
+- ALWAYS query source models first (File, Chat, Message, Friend)
+- Use Memory model only for optimization or filtering
+- Background sync happens automatically in `getMemoriesTimeline()`
+
+**File Upload Size Limits:**
+- Images: 10MB (direct upload)
+- Small videos: 100MB (direct upload)
+- Large videos: 10GB (chunked upload)
+
+**AI Response Behavior:**
+- Users must wait for AI response before sending next message
+- Average response time: 2-5 seconds
+- Failed AI responses still return user message with `aiMessage: null`
+
+**Friend Request Flow:**
+- Check for blocked users before allowing friend requests
+- Rejection automatically creates BlockedUser entry
+- Cannot send multiple pending requests to same user
+
+**Database Indexes:**
+- All user-scoped models have `userId` index
+- Compound indexes for common query patterns
+- TTL index on OTP model (10-minute auto-expiry)
+- Sparse indexes where applicable
+
+### API Documentation
+
+Swagger UI available at `/api-docs` after server start.
+
+Route documentation uses JSDoc comments in router files.
+
+### Security Patterns
+
+- JWT tokens with 30-day expiry
+- Bcrypt password hashing (10 salt rounds)
+- User-scoped queries (always filter by userId)
+- Ownership verification before updates/deletes
+- Input validation with Joi schemas (`src/validation/`)
+- Error messages sanitized (no stack traces to client)
+- Environment variable validation at startup
+
+### Development Workflow
+
+1. **Make changes** to TypeScript files in `src/`
+2. **Dev server auto-reloads** (via `ts-node-dev`)
+3. **Build for production** with `yarn build`
+4. **Deploy** with `yarn prod-start` or `yarn reload-prod` (zero-downtime reload)
+
+**Path Aliases:**
+- Configured in `tsconfig.json`
+- Resolved with `tsc-alias` during build
+- Example: `@/models/user` → `src/models/user`
+
+### Future Enhancements (TODOs in code)
+
+- Vector database integration for semantic memory search (noted in `ai-chat.service.ts`)
+- Socket.IO for real-time chat updates (types already defined)
+- Batch operations for memory sync
+- Image/video analysis for AI context (OCR, object detection)
