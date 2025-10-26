@@ -40,6 +40,14 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB max file size
+    fileSize: 100 * 1024 * 1024, // 100MB max file size for regular uploads
+  },
+});
+
+// Separate upload handler for chunked uploads (no file filter needed as validation happens in controller)
+export const chunkUpload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max per chunk (allowing for 5MB chunks with overhead)
   },
 });

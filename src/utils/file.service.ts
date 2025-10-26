@@ -153,7 +153,11 @@ export const getMaxFileSize = (fileType: "image" | "video"): number => {
     return 10 * 1024 * 1024; // 10MB for images
   }
   if (fileType === "video") {
-    return 100 * 1024 * 1024; // 100MB for videos
+    return 100 * 1024 * 1024; // 100MB for regular uploads (use chunked upload for larger files)
   }
   return 0;
+};
+
+export const getMaxChunkedVideoSize = (): number => {
+  return 10 * 1024 * 1024 * 1024; // 10GB for chunked uploads
 };

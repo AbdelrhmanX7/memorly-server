@@ -7,11 +7,15 @@ import {
 } from "../../controllers/file.controller";
 import { verifyToken } from "../../middleware/auth.middleware";
 import { upload } from "../../middleware/upload.middleware";
+import chunkUploadRouter from "../chunk-upload/router";
 
 const router = express.Router();
 
 // All file routes require authentication
 router.use(verifyToken);
+
+// Chunked upload routes (for large videos)
+router.use("/chunk", chunkUploadRouter);
 
 /**
  * @swagger

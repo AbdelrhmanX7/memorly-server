@@ -6,6 +6,8 @@ import { connectDB } from './config/db';
 import { authorizeB2 } from './config/backblaze';
 import router from './routes/index';
 import { swaggerSpec } from './config/swagger';
+import { startPeriodicCleanup } from './services/cleanup.service';
+import initGemini from './config/gemini';
 
 dotenv.config();
 
@@ -15,12 +17,17 @@ authorizeB2().catch((error) => {
   console.error('Failed to initialize Backblaze B2:', error);
 });
 
+// Start periodic cleanup of expired chunked uploads
+startPeriodicCleanup(6); // Run every 6 hours
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+initGemini()
 
 app.get('/', (_req, res) => {
   res.json({

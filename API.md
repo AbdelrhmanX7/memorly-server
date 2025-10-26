@@ -3,6 +3,7 @@
 Base URL: `http://localhost:4000/api`
 
 ## Table of Contents
+
 - [Authentication](#authentication)
   - [Register](#register)
   - [Login](#login)
@@ -19,9 +20,10 @@ Base URL: `http://localhost:4000/api`
 
 Create a new user account.
 
-**Endpoint:** `POST /api/auth/register`
+**Endpoint:** `POST {API}auth/register`
 
 **Request Body:**
+
 ```json
 {
   "username": "johndoe",
@@ -33,6 +35,7 @@ Create a new user account.
 ```
 
 **Validation Rules:**
+
 - `username`: 3-30 characters, required
 - `email`: Valid email format, required
 - `password`: Minimum 6 characters, required
@@ -40,6 +43,7 @@ Create a new user account.
 - `acceptPrivacyPolicy`: Must be `true`, required
 
 **Success Response (201):**
+
 ```json
 {
   "success": true,
@@ -58,6 +62,7 @@ Create a new user account.
 ```
 
 **Error Responses:**
+
 - `400` - Validation error
 - `409` - Email already registered / Username already taken
 - `500` - Internal server error
@@ -68,9 +73,10 @@ Create a new user account.
 
 Authenticate an existing user.
 
-**Endpoint:** `POST /api/auth/login`
+**Endpoint:** `POST {API}auth/login`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -79,6 +85,7 @@ Authenticate an existing user.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -97,6 +104,7 @@ Authenticate an existing user.
 ```
 
 **Error Responses:**
+
 - `400` - Validation error
 - `401` - Invalid email or password
 - `500` - Internal server error
@@ -107,9 +115,10 @@ Authenticate an existing user.
 
 Verify user's email address with OTP.
 
-**Endpoint:** `POST /api/auth/verify-email`
+**Endpoint:** `POST {API}auth/verify-email`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -118,10 +127,12 @@ Verify user's email address with OTP.
 ```
 
 **Validation Rules:**
+
 - `email`: Valid email format, required
 - `otp`: Exactly 6 digits, required
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -130,6 +141,7 @@ Verify user's email address with OTP.
 ```
 
 **Error Responses:**
+
 - `400` - Validation error / Email already verified / Invalid or expired OTP
 - `404` - User not found
 - `500` - Internal server error
@@ -140,9 +152,10 @@ Verify user's email address with OTP.
 
 Request a new verification OTP.
 
-**Endpoint:** `POST /api/auth/resend-verification-otp`
+**Endpoint:** `POST {API}auth/resend-verification-otp`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
@@ -150,6 +163,7 @@ Request a new verification OTP.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -158,6 +172,7 @@ Request a new verification OTP.
 ```
 
 **Error Responses:**
+
 - `400` - Validation error / Email already verified
 - `404` - User not found
 - `500` - Internal server error / Failed to send email
@@ -168,9 +183,10 @@ Request a new verification OTP.
 
 Request a password reset OTP.
 
-**Endpoint:** `POST /api/auth/forgot-password`
+**Endpoint:** `POST {API}auth/forgot-password`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
@@ -178,6 +194,7 @@ Request a password reset OTP.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -186,6 +203,7 @@ Request a password reset OTP.
 ```
 
 **Error Responses:**
+
 - `400` - Validation error
 - `404` - User not found
 - `500` - Internal server error / Failed to send email
@@ -196,9 +214,10 @@ Request a password reset OTP.
 
 Reset password using OTP.
 
-**Endpoint:** `POST /api/auth/reset-password`
+**Endpoint:** `POST {API}auth/reset-password`
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -208,11 +227,13 @@ Reset password using OTP.
 ```
 
 **Validation Rules:**
+
 - `email`: Valid email format, required
 - `otp`: Exactly 6 digits, required
 - `newPassword`: Minimum 6 characters, required
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -221,6 +242,7 @@ Reset password using OTP.
 ```
 
 **Error Responses:**
+
 - `400` - Validation error / Invalid or expired OTP
 - `404` - User not found
 - `500` - Internal server error
@@ -236,9 +258,10 @@ Authorization: Bearer <your-jwt-token>
 ```
 
 **Example:**
+
 ```bash
 curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  http://localhost:4000/api/protected-route
+  http://localhost:4000{API}protected-route
 ```
 
 ---
