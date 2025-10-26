@@ -35,11 +35,11 @@ Successfully implemented chunked upload functionality to support video files lar
 
 **File**: `src/controllers/chunk-upload.controller.ts`
 
-- `initiateUpload`: POST `{API}files/chunk/initiate`
-- `uploadChunkHandler`: POST `{API}files/chunk/upload`
-- `completeUpload`: POST `{API}files/chunk/complete`
-- `abortUpload`: POST `{API}files/chunk/abort`
-- `getUploadStatusHandler`: GET `{API}files/chunk/status/:uploadId`
+- `initiateUpload`: POST `{API}/files/chunk/initiate`
+- `uploadChunkHandler`: POST `{API}/files/chunk/upload`
+- `completeUpload`: POST `{API}/files/chunk/complete`
+- `abortUpload`: POST `{API}/files/chunk/abort`
+- `getUploadStatusHandler`: GET `{API}/files/chunk/status/:uploadId`
 
 ### 4. Routes
 
@@ -139,19 +139,19 @@ src/
 ## API Workflow
 
 ```
-1. Client: POST {API}files/chunk/initiate
+1. Client: POST {API}/files/chunk/initiate
    ↓ Returns uploadId
 
 2. For each chunk:
-   Client: POST {API}files/chunk/upload (with chunk data)
+   Client: POST {API}/files/chunk/upload (with chunk data)
    ↓ Returns progress
 
-3. Client: POST {API}files/chunk/complete
+3. Client: POST {API}/files/chunk/complete
    ↓ Returns file URL and metadata
 
 Optional:
-- GET {API}files/chunk/status/:uploadId (check progress)
-- POST {API}files/chunk/abort (cancel upload)
+- GET {API}/files/chunk/status/:uploadId (check progress)
+- POST {API}/files/chunk/abort (cancel upload)
 ```
 
 ## File Size Limits

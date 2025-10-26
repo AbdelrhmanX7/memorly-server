@@ -20,7 +20,7 @@ Base URL: `http://localhost:4000/api`
 
 Create a new user account.
 
-**Endpoint:** `POST {API}auth/register`
+**Endpoint:** `POST {API}/auth/register`
 
 **Request Body:**
 
@@ -73,7 +73,7 @@ Create a new user account.
 
 Authenticate an existing user.
 
-**Endpoint:** `POST {API}auth/login`
+**Endpoint:** `POST {API}/auth/login`
 
 **Request Body:**
 
@@ -115,7 +115,7 @@ Authenticate an existing user.
 
 Verify user's email address with OTP.
 
-**Endpoint:** `POST {API}auth/verify-email`
+**Endpoint:** `POST {API}/auth/verify-email`
 
 **Request Body:**
 
@@ -152,7 +152,7 @@ Verify user's email address with OTP.
 
 Request a new verification OTP.
 
-**Endpoint:** `POST {API}auth/resend-verification-otp`
+**Endpoint:** `POST {API}/auth/resend-verification-otp`
 
 **Request Body:**
 
@@ -183,7 +183,7 @@ Request a new verification OTP.
 
 Request a password reset OTP.
 
-**Endpoint:** `POST {API}auth/forgot-password`
+**Endpoint:** `POST {API}/auth/forgot-password`
 
 **Request Body:**
 
@@ -214,7 +214,7 @@ Request a password reset OTP.
 
 Reset password using OTP.
 
-**Endpoint:** `POST {API}auth/reset-password`
+**Endpoint:** `POST {API}/auth/reset-password`
 
 **Request Body:**
 
@@ -261,7 +261,7 @@ Authorization: Bearer <your-jwt-token>
 
 ```bash
 curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  http://localhost:4000{API}protected-route
+  http://localhost:4000{API}/protected-route
 ```
 
 ---

@@ -9,10 +9,11 @@ import {
 } from "../utils/chunk-upload.service";
 import { File } from "../models/file";
 import { handleError } from "../utils/handle-error";
+import { createMemory } from "../utils/memory.helper";
 
 /**
  * Initiate a chunked upload session
- * POST {API}files/chunk/initiate
+ * POST {API}/files/chunk/initiate
  */
 export const initiateUpload = async (
   req: Request,
@@ -91,7 +92,7 @@ export const initiateUpload = async (
 
 /**
  * Upload a chunk
- * POST {API}files/chunk/upload
+ * POST {API}/files/chunk/upload
  */
 export const uploadChunkHandler = async (
   req: Request,
@@ -165,7 +166,7 @@ export const uploadChunkHandler = async (
 
 /**
  * Complete chunked upload
- * POST {API}files/chunk/complete
+ * POST {API}/files/chunk/complete
  */
 export const completeUpload = async (
   req: Request,
@@ -217,6 +218,18 @@ export const completeUpload = async (
       bucketName: result.bucketName,
     });
 
+    // Create memory for file upload
+    await createMemory({
+      userId,
+      activityType: "file_upload",
+      metadata: {
+        fileId: newFile._id as any,
+        fileName: newFile.fileName,
+        fileType: newFile.fileType,
+        fileUrl: newFile.fileUrl,
+      },
+    });
+
     res.status(200).json({
       success: true,
       message: "Upload completed successfully",
@@ -243,7 +256,7 @@ export const completeUpload = async (
 
 /**
  * Abort chunked upload
- * POST {API}files/chunk/abort
+ * POST {API}/files/chunk/abort
  */
 export const abortUpload = async (
   req: Request,
@@ -291,7 +304,7 @@ export const abortUpload = async (
 
 /**
  * Get upload status
- * GET {API}files/chunk/status/:uploadId
+ * GET {API}/files/chunk/status/:uploadId
  */
 export const getUploadStatusHandler = async (
   req: Request,

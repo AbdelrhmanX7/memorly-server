@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { IUser } from "../models/user";
+import { Request } from "express";
 
 declare global {
   namespace Express {
@@ -11,4 +12,11 @@ declare global {
       };
     }
   }
+}
+
+export interface AuthRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+  };
 }

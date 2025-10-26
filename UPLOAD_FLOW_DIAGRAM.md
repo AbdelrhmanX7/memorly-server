@@ -7,7 +7,7 @@
 │   Frontend  │
 └──────┬──────┘
        │
-       │ POST {API}files/upload
+       │ POST {API}/files/upload
        │ (FormData with file)
        ▼
 ┌─────────────┐
@@ -43,7 +43,7 @@
                    │ - totalSize    │
                    └────────┬───────┘
                             │
-                            │ 2. POST {API}files/chunk/initiate
+                            │ 2. POST {API}/files/chunk/initiate
                             │    { originalName, mimeType, totalSize, totalChunks }
                             ▼
 ┌──────────────────────────────────────────────────────────────┐
@@ -67,7 +67,7 @@
 │  │   3. Slice chunk from file (5MB)                      │  │
 │  │      chunk = file.slice(i * 5MB, (i+1) * 5MB)        │  │
 │  │                                                         │  │
-│  │   4. POST {API}files/chunk/upload                     │  │
+│  │   4. POST {API}/files/chunk/upload                     │  │
 │  │      FormData: { uploadId, partNumber: i+1, chunk }   │  │
 │  │        │                                               │  │
 │  │        ▼                                               │  │
@@ -92,7 +92,7 @@
                      │
                      │ All chunks uploaded!
                      │
-                     │ 6. POST {API}files/chunk/complete
+                     │ 6. POST {API}/files/chunk/complete
                      │    { uploadId }
                      ▼
 ┌──────────────────────────────────────────────────────────────┐
@@ -261,7 +261,7 @@ Upload Session States:
 
 ```
 ┌──────────────────────────────────────┐
-│ POST {API}files/chunk/initiate       │
+│ POST {API}/files/chunk/initiate       │
 │                                      │
 │ Headers:                             │
 │   Authorization: Bearer <token>     │
@@ -295,7 +295,7 @@ Upload Session States:
 
 ```
 ┌──────────────────────────────────────┐
-│ POST {API}files/chunk/upload         │
+│ POST {API}/files/chunk/upload         │
 │                                      │
 │ Headers:                             │
 │   Authorization: Bearer <token>     │
@@ -327,7 +327,7 @@ Upload Session States:
 
 ```
 ┌──────────────────────────────────────┐
-│ POST {API}files/chunk/complete       │
+│ POST {API}/files/chunk/complete       │
 │                                      │
 │ Headers:                             │
 │   Authorization: Bearer <token>     │
@@ -436,7 +436,7 @@ Upload fails at chunk 45
         │
         │ User refreshes page
         ▼
-GET {API}files/chunk/status/:uploadId
+GET {API}/files/chunk/status/:uploadId
         │
         │ Response: uploadedChunks = 44
         ▼
@@ -455,7 +455,7 @@ Error 404: Upload session not found
         │
         │ Solution: Restart upload
         ▼
-POST {API}files/chunk/initiate (start over)
+POST {API}/files/chunk/initiate (start over)
 ```
 
 ### Scenario 3: Incomplete Upload

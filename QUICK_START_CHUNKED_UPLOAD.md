@@ -13,20 +13,20 @@ Upload videos up to **10GB** by splitting them into **5MB chunks**.
 
 ## 🔑 API Endpoints
 
-| Endpoint                      | Method | Purpose         |
-| ----------------------------- | ------ | --------------- |
-| `{API}files/chunk/initiate`   | POST   | Start upload    |
-| `{API}files/chunk/upload`     | POST   | Upload chunk    |
-| `{API}files/chunk/complete`   | POST   | Finalize upload |
-| `{API}files/chunk/abort`      | POST   | Cancel upload   |
-| `{API}files/chunk/status/:id` | GET    | Check progress  |
+| Endpoint                       | Method | Purpose         |
+| ------------------------------ | ------ | --------------- |
+| `{API}/files/chunk/initiate`   | POST   | Start upload    |
+| `{API}/files/chunk/upload`     | POST   | Upload chunk    |
+| `{API}/files/chunk/complete`   | POST   | Finalize upload |
+| `{API}/files/chunk/abort`      | POST   | Cancel upload   |
+| `{API}/files/chunk/status/:id` | GET    | Check progress  |
 
 ## 🚀 3-Step Upload Process
 
 ### Step 1: Initiate
 
 ```bash
-curl -X POST http://localhost:4000{API}files/chunk/initiate \
+curl -X POST http://localhost:4000{API}/files/chunk/initiate \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -42,7 +42,7 @@ curl -X POST http://localhost:4000{API}files/chunk/initiate \
 ### Step 2: Upload Chunks (Repeat for each chunk)
 
 ```bash
-curl -X POST http://localhost:4000{API}files/chunk/upload \
+curl -X POST http://localhost:4000{API}/files/chunk/upload \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "uploadId=xyz123" \
   -F "partNumber=1" \
@@ -54,7 +54,7 @@ curl -X POST http://localhost:4000{API}files/chunk/upload \
 ### Step 3: Complete
 
 ```bash
-curl -X POST http://localhost:4000{API}files/chunk/complete \
+curl -X POST http://localhost:4000{API}/files/chunk/complete \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{ "uploadId": "xyz123" }'
@@ -70,7 +70,7 @@ async function uploadLargeVideo(file) {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
   // Step 1: Initiate
-  const { uploadId } = await fetch("{API}files/chunk/initiate", {
+  const { uploadId } = await fetch("{API}/files/chunk/initiate", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -94,7 +94,7 @@ async function uploadLargeVideo(file) {
     formData.append("partNumber", i + 1);
     formData.append("chunk", chunk);
 
-    await fetch("{API}files/chunk/upload", {
+    await fetch("{API}/files/chunk/upload", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
@@ -104,7 +104,7 @@ async function uploadLargeVideo(file) {
   }
 
   // Step 3: Complete
-  const result = await fetch("{API}files/chunk/complete", {
+  const result = await fetch("{API}/files/chunk/complete", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -133,7 +133,7 @@ No configuration needed! The server automatically:
 const CONFIG = {
   CHUNK_SIZE: 5 * 1024 * 1024, // 5MB
   MAX_VIDEO_SIZE: 10 * 1024 * 1024 * 1024, // 10GB
-  API_URL: "http://localhost:4000{API}files/chunk",
+  API_URL: "http://localhost:4000{API}/files/chunk",
 };
 ```
 
@@ -141,7 +141,7 @@ const CONFIG = {
 
 ```javascript
 // Get upload status
-const status = await fetch(`{API}files/chunk/status/${uploadId}`, {
+const status = await fetch(`{API}/files/chunk/status/${uploadId}`, {
   headers: { Authorization: `Bearer ${token}` },
 }).then((r) => r.json());
 
@@ -152,7 +152,7 @@ console.log(`Status: ${status.status}`); // initiated, uploading, completed, fai
 ## ❌ Cancel Upload
 
 ```javascript
-await fetch("{API}files/chunk/abort", {
+await fetch("{API}/files/chunk/abort", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${token}`,

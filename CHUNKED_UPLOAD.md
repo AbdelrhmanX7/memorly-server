@@ -19,7 +19,7 @@ All endpoints require authentication via Bearer token.
 
 ### 1. Initiate Upload
 
-**POST** `{API}files/chunk/initiate`
+**POST** `{API}/files/chunk/initiate`
 
 Start a new chunked upload session.
 
@@ -50,7 +50,7 @@ Start a new chunked upload session.
 
 ### 2. Upload Chunk
 
-**POST** `{API}files/chunk/upload`
+**POST** `{API}/files/chunk/upload`
 
 Upload a single chunk of the file.
 
@@ -77,7 +77,7 @@ Upload a single chunk of the file.
 
 ### 3. Complete Upload
 
-**POST** `{API}files/chunk/complete`
+**POST** `{API}/files/chunk/complete`
 
 Finalize the upload after all chunks are uploaded.
 
@@ -109,7 +109,7 @@ Finalize the upload after all chunks are uploaded.
 
 ### 4. Get Upload Status
 
-**GET** `{API}files/chunk/status/:uploadId`
+**GET** `{API}/files/chunk/status/:uploadId`
 
 Check the status of an ongoing upload.
 
@@ -137,7 +137,7 @@ Check the status of an ongoing upload.
 
 ### 5. Abort Upload
 
-**POST** `{API}files/chunk/abort`
+**POST** `{API}/files/chunk/abort`
 
 Cancel an ongoing upload and clean up partial data.
 
@@ -165,7 +165,7 @@ Cancel an ongoing upload and clean up partial data.
 ```typescript
 class ChunkedUploader {
   private readonly CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
-  private readonly API_URL = "http://localhost:4000{API}files/chunk";
+  private readonly API_URL = "http://localhost:4000{API}/files/chunk";
   private authToken: string;
 
   constructor(authToken: string) {
@@ -276,7 +276,7 @@ const VideoUploader: React.FC = () => {
   const [uploadId, setUploadId] = useState<string | null>(null);
 
   const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
-  const API_URL = "http://localhost:4000{API}files/chunk";
+  const API_URL = "http://localhost:4000{API}/files/chunk";
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
@@ -396,8 +396,8 @@ export default VideoUploader;
 
 ### File Size Limits
 
-- **Regular upload**: Up to 100MB (use `{API}files/upload`)
-- **Chunked upload**: 100MB to 10GB (use `{API}files/chunk/*`)
+- **Regular upload**: Up to 100MB (use `{API}/files/upload`)
+- **Chunked upload**: 100MB to 10GB (use `{API}/files/chunk/*`)
 
 ### Upload Session
 

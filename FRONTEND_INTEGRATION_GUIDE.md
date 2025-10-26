@@ -8,13 +8,13 @@ This guide provides everything your frontend team needs to implement large video
 
 ## 🎯 When to Use Which Upload Method
 
-### Regular Upload (`{API}files/upload`)
+### Regular Upload (`{API}/files/upload`)
 
 - ✅ **Images**: All sizes (max 10MB)
 - ✅ **Small videos**: Under 100MB
 - ⚡ **Advantage**: Single request, faster for small files
 
-### Chunked Upload (`{API}files/chunk/*`)
+### Chunked Upload (`{API}/files/chunk/*`)
 
 - ✅ **Large videos**: 100MB to 10GB
 - ⚡ **Advantages**: Progress tracking, resumable, handles network interruptions
@@ -52,8 +52,8 @@ This guide provides everything your frontend team needs to implement large video
 ### Base URL
 
 ```
-Production: https://your-domain.com{API}files/chunk
-Development: http://localhost:4000{API}files/chunk
+Production: https://your-domain.com{API}/files/chunk
+Development: http://localhost:4000{API}/files/chunk
 ```
 
 ### Authentication
@@ -70,7 +70,7 @@ Authorization: Bearer <user_token>
 
 ### 1️⃣ Initiate Upload
 
-**Endpoint**: `POST {API}files/chunk/initiate`
+**Endpoint**: `POST {API}/files/chunk/initiate`
 
 **When to call**: Before uploading any chunks
 
@@ -135,7 +135,7 @@ Authorization: Bearer <token>
 
 ### 2️⃣ Upload Chunk
 
-**Endpoint**: `POST {API}files/chunk/upload`
+**Endpoint**: `POST {API}/files/chunk/upload`
 
 **When to call**: For each chunk of the file (1, 2, 3... up to totalChunks)
 
@@ -195,7 +195,7 @@ const progress = (uploadedChunks / totalChunks) * 100; // Percentage
 
 ### 3️⃣ Complete Upload
 
-**Endpoint**: `POST {API}files/chunk/complete`
+**Endpoint**: `POST {API}/files/chunk/complete`
 
 **When to call**: After ALL chunks are uploaded
 
@@ -244,7 +244,7 @@ Authorization: Bearer <token>
 
 ### 4️⃣ Get Upload Status (Optional)
 
-**Endpoint**: `GET {API}files/chunk/status/:uploadId`
+**Endpoint**: `GET {API}/files/chunk/status/:uploadId`
 
 **When to call**: To check progress or resume interrupted upload
 
@@ -290,7 +290,7 @@ Authorization: Bearer <token>
 
 ### 5️⃣ Abort Upload (Optional)
 
-**Endpoint**: `POST {API}files/chunk/abort`
+**Endpoint**: `POST {API}/files/chunk/abort`
 
 **When to call**: When user cancels upload
 
@@ -340,7 +340,7 @@ interface UploadResult {
 }
 
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
-const API_BASE = "http://localhost:4000{API}files/chunk";
+const API_BASE = "http://localhost:4000{API}/files/chunk";
 
 export const useChunkedUpload = (token: string) => {
   const [uploading, setUploading] = useState(false);
@@ -639,7 +639,7 @@ class ChunkedUploader {
 
 // Usage
 const uploader = new ChunkedUploader(
-  "http://localhost:4000{API}files/chunk",
+  "http://localhost:4000{API}/files/chunk",
   "your-auth-token"
 );
 

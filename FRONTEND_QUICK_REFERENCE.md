@@ -3,14 +3,15 @@
 ## 📦 What You Need to Know
 
 ### File Size Routing Logic
+
 ```javascript
 const MAX_REGULAR_UPLOAD = 100 * 1024 * 1024; // 100MB
 
 if (file.size <= MAX_REGULAR_UPLOAD) {
-  // Use regular upload: POST {API}files/upload
+  // Use regular upload: POST {API}/files/upload
   uploadRegular(file);
 } else {
-  // Use chunked upload: POST {API}files/chunk/*
+  // Use chunked upload: POST {API}/files/chunk/*
   uploadChunked(file);
 }
 ```
@@ -20,8 +21,9 @@ if (file.size <= MAX_REGULAR_UPLOAD) {
 ## 🎯 Three-Step Process
 
 ### Step 1: INITIATE
+
 ```javascript
-POST {API}files/chunk/initiate
+POST {API}/files/chunk/initiate
 
 // Send:
 {
@@ -40,8 +42,9 @@ POST {API}files/chunk/initiate
 ```
 
 ### Step 2: UPLOAD (Loop for each chunk)
+
 ```javascript
-POST {API}files/chunk/upload
+POST {API}/files/chunk/upload
 
 // Send FormData:
 const formData = new FormData();
@@ -58,8 +61,9 @@ formData.append('chunk', chunkBlob);
 ```
 
 ### Step 3: COMPLETE
+
 ```javascript
-POST {API}files/chunk/complete
+POST {API}/files/chunk/complete
 
 // Send:
 {
@@ -79,6 +83,7 @@ POST {API}files/chunk/complete
 ## 📝 Copy-Paste Code
 
 ### TypeScript Function
+
 ```typescript
 async function uploadLargeVideo(
   file: File,
@@ -87,14 +92,14 @@ async function uploadLargeVideo(
 ): Promise<string> {
   const CHUNK_SIZE = 5 * 1024 * 1024;
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-  const API = 'http://localhost:4000{API}files/chunk';
+  const API = "http://localhost:4000{API}/files/chunk";
 
   // STEP 1: Initiate
-  const initRes = await fetch(`${API}/initiate`, {
-    method: 'POST',
+  const initRes = await fetch(`${API}//initiate`, {
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       originalName: file.name,
@@ -103,19 +108,21 @@ async function uploadLargeVideo(
       totalChunks,
     }),
   });
-  const { data: { uploadId } } = await initRes.json();
+  const {
+    data: { uploadId },
+  } = await initRes.json();
 
   // STEP 2: Upload chunks
   for (let i = 0; i < totalChunks; i++) {
     const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
     const formData = new FormData();
-    formData.append('uploadId', uploadId);
-    formData.append('partNumber', String(i + 1));
-    formData.append('chunk', chunk);
+    formData.append("uploadId", uploadId);
+    formData.append("partNumber", String(i + 1));
+    formData.append("chunk", chunk);
 
-    await fetch(`${API}/upload`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
+    await fetch(`${API}//upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
     });
 
@@ -123,11 +130,11 @@ async function uploadLargeVideo(
   }
 
   // STEP 3: Complete
-  const completeRes = await fetch(`${API}/complete`, {
-    method: 'POST',
+  const completeRes = await fetch(`${API}//complete`, {
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ uploadId }),
   });
@@ -137,10 +144,8 @@ async function uploadLargeVideo(
 }
 
 // USAGE:
-const videoUrl = await uploadLargeVideo(
-  file,
-  authToken,
-  (percent) => console.log(`${percent}% done`)
+const videoUrl = await uploadLargeVideo(file, authToken, (percent) =>
+  console.log(`${percent}% done`)
 );
 ```
 
@@ -149,6 +154,7 @@ const videoUrl = await uploadLargeVideo(
 ## 🎨 UI Components
 
 ### Progress Bar Component
+
 ```tsx
 interface UploadProgressProps {
   uploadedChunks: number;
@@ -166,12 +172,11 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
   return (
     <div className="upload-progress">
       <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{ width: `${percent}%` }}
-        />
+        <div className="progress-fill" style={{ width: `${percent}%` }} />
       </div>
-      <p>{uploadedChunks} / {totalChunks} chunks ({percent.toFixed(1)}%)</p>
+      <p>
+        {uploadedChunks} / {totalChunks} chunks ({percent.toFixed(1)}%)
+      </p>
       <button onClick={onCancel}>Cancel</button>
     </div>
   );
@@ -179,15 +184,16 @@ const UploadProgress: React.FC<UploadProgressProps> = ({
 ```
 
 ### File Size Display
+
 ```typescript
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024) return bytes + " B";
   const kb = bytes / 1024;
-  if (kb < 1024) return kb.toFixed(2) + ' KB';
+  if (kb < 1024) return kb.toFixed(2) + " KB";
   const mb = kb / 1024;
-  if (mb < 1024) return mb.toFixed(2) + ' MB';
+  if (mb < 1024) return mb.toFixed(2) + " MB";
   const gb = mb / 1024;
-  return gb.toFixed(2) + ' GB';
+  return gb.toFixed(2) + " GB";
 }
 
 // Usage: formatBytes(524288000) → "500.00 MB"
@@ -198,6 +204,7 @@ function formatBytes(bytes: number): string {
 ## 🔧 Helper Functions
 
 ### Calculate Chunks
+
 ```javascript
 function calculateChunks(fileSize) {
   const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
@@ -206,17 +213,18 @@ function calculateChunks(fileSize) {
 ```
 
 ### Validate File
+
 ```javascript
 function validateVideo(file) {
   // Check type
-  if (!file.type.startsWith('video/')) {
-    throw new Error('Please select a video file');
+  if (!file.type.startsWith("video/")) {
+    throw new Error("Please select a video file");
   }
 
   // Check size
   const MAX_SIZE = 10 * 1024 * 1024 * 1024; // 10GB
   if (file.size > MAX_SIZE) {
-    throw new Error('File size exceeds 10GB limit');
+    throw new Error("File size exceeds 10GB limit");
   }
 
   return true;
@@ -224,6 +232,7 @@ function validateVideo(file) {
 ```
 
 ### Retry Failed Chunk
+
 ```javascript
 async function uploadChunkWithRetry(
   chunk,
@@ -235,21 +244,21 @@ async function uploadChunkWithRetry(
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const formData = new FormData();
-      formData.append('uploadId', uploadId);
-      formData.append('partNumber', String(partNumber));
-      formData.append('chunk', chunk);
+      formData.append("uploadId", uploadId);
+      formData.append("partNumber", String(partNumber));
+      formData.append("chunk", chunk);
 
-      const res = await fetch('{API}files/chunk/upload', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
+      const res = await fetch("{API}/files/chunk/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) throw new Error("Upload failed");
       return await res.json();
     } catch (err) {
       if (attempt === maxRetries) throw err;
-      await new Promise(r => setTimeout(r, 1000 * attempt));
+      await new Promise((r) => setTimeout(r, 1000 * attempt));
     }
   }
 }
@@ -260,32 +269,34 @@ async function uploadChunkWithRetry(
 ## ⚠️ Error Handling
 
 ### Error Messages
+
 ```javascript
 const ERROR_MESSAGES = {
-  401: 'Session expired. Please log in again.',
-  400: 'Invalid file. Check file type and size.',
-  404: 'Upload session expired. Please restart upload.',
-  500: 'Upload failed. Please try again.',
+  401: "Session expired. Please log in again.",
+  400: "Invalid file. Check file type and size.",
+  404: "Upload session expired. Please restart upload.",
+  500: "Upload failed. Please try again.",
 };
 
 function handleUploadError(error) {
   const statusCode = error.response?.status;
-  const message = ERROR_MESSAGES[statusCode] || 'Upload failed';
+  const message = ERROR_MESSAGES[statusCode] || "Upload failed";
   alert(message);
 }
 ```
 
 ### Try-Catch Pattern
+
 ```javascript
 try {
   const url = await uploadLargeVideo(file, token, onProgress);
-  console.log('Success:', url);
+  console.log("Success:", url);
 } catch (error) {
-  if (error.message.includes('401')) {
+  if (error.message.includes("401")) {
     // Redirect to login
-    window.location.href = '/login';
+    window.location.href = "/login";
   } else {
-    alert('Upload failed: ' + error.message);
+    alert("Upload failed: " + error.message);
   }
 }
 ```
@@ -295,14 +306,16 @@ try {
 ## 🎯 Optional Features
 
 ### Cancel Upload
+
 ```javascript
-POST {API}files/chunk/abort
+POST {API}/files/chunk/abort
 Body: { "uploadId": "xyz123" }
 ```
 
 ### Check Status
+
 ```javascript
-GET {API}files/chunk/status/:uploadId
+GET {API}/files/chunk/status/:uploadId
 Response: {
   "uploadedChunks": 45,
   "totalChunks": 100,
@@ -311,9 +324,10 @@ Response: {
 ```
 
 ### Resume Upload
+
 ```javascript
 // 1. Check which chunks uploaded
-const status = await fetch(`{API}files/chunk/status/${uploadId}`);
+const status = await fetch(`{API}/files/chunk/status/${uploadId}`);
 const { uploadedChunks, totalChunks } = await status.json();
 
 // 2. Resume from next chunk
@@ -336,7 +350,7 @@ interface UploadState {
 }
 
 const uploadSlice = createSlice({
-  name: 'upload',
+  name: "upload",
   initialState: {
     uploading: false,
     uploadId: null,
@@ -372,7 +386,7 @@ const uploadSlice = createSlice({
 ## 🎬 Complete React Example
 
 ```tsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 const VideoUploadForm: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -381,8 +395,8 @@ const VideoUploadForm: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const CHUNK_SIZE = 5 * 1024 * 1024;
-  const API = 'http://localhost:4000{API}files/chunk';
-  const token = localStorage.getItem('authToken') || '';
+  const API = "http://localhost:4000{API}/files/chunk";
+  const token = localStorage.getItem("authToken") || "";
 
   const handleUpload = async () => {
     if (!file) return;
@@ -394,11 +408,11 @@ const VideoUploadForm: React.FC = () => {
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
       // Initiate
-      const initRes = await fetch(`${API}/initiate`, {
-        method: 'POST',
+      const initRes = await fetch(`${API}//initiate`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           originalName: file.name,
@@ -407,19 +421,21 @@ const VideoUploadForm: React.FC = () => {
           totalChunks,
         }),
       });
-      const { data: { uploadId } } = await initRes.json();
+      const {
+        data: { uploadId },
+      } = await initRes.json();
 
       // Upload chunks
       for (let i = 0; i < totalChunks; i++) {
         const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
         const formData = new FormData();
-        formData.append('uploadId', uploadId);
-        formData.append('partNumber', String(i + 1));
-        formData.append('chunk', chunk);
+        formData.append("uploadId", uploadId);
+        formData.append("partNumber", String(i + 1));
+        formData.append("chunk", chunk);
 
-        await fetch(`${API}/upload`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
+        await fetch(`${API}//upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
 
@@ -427,20 +443,20 @@ const VideoUploadForm: React.FC = () => {
       }
 
       // Complete
-      const completeRes = await fetch(`${API}/complete`, {
-        method: 'POST',
+      const completeRes = await fetch(`${API}//complete`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ uploadId }),
       });
       const { data } = await completeRes.json();
 
       setVideoUrl(data.fileUrl);
-      alert('Upload complete!');
+      alert("Upload complete!");
     } catch (error) {
-      alert('Upload failed: ' + error.message);
+      alert("Upload failed: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -467,7 +483,7 @@ const VideoUploadForm: React.FC = () => {
       )}
 
       {videoUrl && (
-        <video src={videoUrl} controls style={{ maxWidth: '100%' }} />
+        <video src={videoUrl} controls style={{ maxWidth: "100%" }} />
       )}
     </div>
   );
@@ -480,14 +496,14 @@ export default VideoUploadForm;
 
 ## 🔗 API Endpoints Summary
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `{API}files/upload` | POST | Regular upload (<100MB) |
-| `{API}files/chunk/initiate` | POST | Start chunked upload |
-| `{API}files/chunk/upload` | POST | Upload one chunk |
-| `{API}files/chunk/complete` | POST | Finish upload |
-| `{API}files/chunk/status/:id` | GET | Check progress |
-| `{API}files/chunk/abort` | POST | Cancel upload |
+| Endpoint                       | Method | Purpose                 |
+| ------------------------------ | ------ | ----------------------- |
+| `{API}/files/upload`           | POST   | Regular upload (<100MB) |
+| `{API}/files/chunk/initiate`   | POST   | Start chunked upload    |
+| `{API}/files/chunk/upload`     | POST   | Upload one chunk        |
+| `{API}/files/chunk/complete`   | POST   | Finish upload           |
+| `{API}/files/chunk/status/:id` | GET    | Check progress          |
+| `{API}/files/chunk/abort`      | POST   | Cancel upload           |
 
 ---
 
@@ -508,13 +524,13 @@ export default VideoUploadForm;
 
 ## 🆘 Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| 401 Unauthorized | Check token is valid and not expired |
-| Upload fails at chunk 1 | Verify uploadId from initiate step |
-| Progress stuck at 99% | Check if last chunk uploaded successfully |
-| "Session not found" | Upload expired (24h limit) - restart |
-| Out of memory | Using wrong chunk size - use 5MB |
+| Issue                   | Solution                                  |
+| ----------------------- | ----------------------------------------- |
+| 401 Unauthorized        | Check token is valid and not expired      |
+| Upload fails at chunk 1 | Verify uploadId from initiate step        |
+| Progress stuck at 99%   | Check if last chunk uploaded successfully |
+| "Session not found"     | Upload expired (24h limit) - restart      |
+| Out of memory           | Using wrong chunk size - use 5MB          |
 
 ---
 
@@ -528,6 +544,7 @@ export default VideoUploadForm;
 ---
 
 **Quick reminder**:
+
 - Chunk size = **5MB** (5,242,880 bytes)
 - Max file size = **10GB**
 - Session timeout = **24 hours**
